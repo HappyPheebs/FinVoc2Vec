@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn import CrossEntropyLoss
 from transformers.models.wav2vec2.modeling_wav2vec2 import Wav2Vec2PreTrainedModel, Wav2Vec2Model
 from transformers import AutoConfig
-from .finvoc2vec_config import FinVoc2VecConfig
+from finvoc2vec_config import FinVoc2VecConfig
 
 
 class FinVoc2Vec(Wav2Vec2PreTrainedModel):
@@ -11,8 +11,13 @@ class FinVoc2Vec(Wav2Vec2PreTrainedModel):
     config_class = FinVoc2VecConfig
     
     def __init__(self, model_config: AutoConfig):
-        
+        # 先调用父类初始化
         super().__init__(model_config)
+
+        # 兼容新版 transformers: 某些版本在 init_weights/tie_weights 中会访问 all_tied_weights_keys
+        # 老代码里没有定义这个属性，这里显式补一个空字典即可，避免 AttributeError
+        if not hasattr(self, "all_tied_weights_keys"):
+            self.all_tied_weights_keys = {}
 
         self.num_labels = model_config.num_labels
         self.pooling_mode = model_config.pooling_mode
